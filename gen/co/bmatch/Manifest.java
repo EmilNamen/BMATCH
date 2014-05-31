@@ -9,6 +9,11 @@ package co.bmatch;
 
 public final class Manifest {
     public static final class permission {
-        public static final String C2D_MESSAGE="com.example.gcm.permission.C2D_MESSAGE";
+        /** 
+  IMPORTANT: Change "com.parse.tutorials.pushnotifications.permission.C2D_MESSAGE" in the lines below
+  to match your app's package name + ".permission.C2D_MESSAGE".
+    
+         */
+        public static final String C2D_MESSAGE="co.bmatch.permission.C2D_MESSAGE";
     }
 }

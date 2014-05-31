@@ -49,15 +49,17 @@ public final class R {
         public static final int inicio=0x7f020013;
         public static final int interna=0x7f020014;
         public static final int listacontactos=0x7f020015;
+        public static final int scan=0x7f020016;
     }
     public static final class id {
-        public static final int EditTextSearch=0x7f090015;
-        public static final int EditTextcode=0x7f090005;
+        public static final int EditTextCompany=0x7f090005;
+        public static final int EditTextSearch=0x7f090019;
         public static final int EditTextemail=0x7f090003;
         public static final int EditTextfirstName=0x7f090001;
         public static final int EditTextjob=0x7f090004;
         public static final int EditTextlastName=0x7f090002;
-        public static final int action_settings=0x7f090018;
+        public static final int action_settings=0x7f09001d;
+        public static final int buttonEnter=0x7f090015;
         public static final int buttonLOGIN=0x7f090006;
         public static final int buttonSendChat=0x7f090010;
         public static final int chatContactImage=0x7f09000a;
@@ -66,15 +68,19 @@ public final class R {
         public static final int chatTextName=0x7f09000b;
         public static final int comment=0x7f090008;
         public static final int contactImage=0x7f090011;
+        public static final int editCodeText=0x7f090017;
         public static final int editTextChatfield=0x7f09000f;
         public static final int form=0x7f09000e;
         public static final int form2=0x7f090009;
         public static final int imageHome=0x7f090000;
-        public static final int listViewActivePeople=0x7f090016;
-        public static final int listViewPeople=0x7f090017;
+        public static final int listViewActivePeople=0x7f09001b;
+        public static final int listViewActivePeopleLayout=0x7f09001a;
+        public static final int listViewPeople=0x7f09001c;
         public static final int textJob=0x7f090013;
         public static final int textName=0x7f090012;
-        public static final int upperImage=0x7f090014;
+        public static final int textView1=0x7f090016;
+        public static final int textView2=0x7f090014;
+        public static final int upperImage=0x7f090018;
         public static final int wrapper=0x7f090007;
     }
     public static final class layout {
@@ -82,8 +88,10 @@ public final class R {
         public static final int chat_intern=0x7f030001;
         public static final int chat_main=0x7f030002;
         public static final int contact_main=0x7f030003;
-        public static final int load_main=0x7f030004;
-        public static final int peoplelist_main=0x7f030005;
+        public static final int first_main=0x7f030004;
+        public static final int load_main=0x7f030005;
+        public static final int peoplelist_main=0x7f030006;
+        public static final int pushhandler_main=0x7f030007;
     }
     public static final class menu {
         public static final int main=0x7f080000;

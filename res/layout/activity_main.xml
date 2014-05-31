@@ -12,14 +12,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
-        android:layout_weight="0.07"
         android:scaleType="fitXY"
-        android:src="@drawable/cabezote_corto" />
-
+        android:layout_weight="0.05"
+        android:src="@drawable/bmatch_cabezote" />
+    
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.07"
+        android:layout_weight="0.03"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin">        
+        
+    </LinearLayout>
+        
+
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.03"
         android:orientation="vertical"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin" >
@@ -57,13 +69,16 @@
             android:inputType="textEmailAddress" />
 
         <EditText
-            android:id="@+id/EditTextcode"
+            android:id="@+id/EditTextCompany"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
             android:ems="10"
-            android:hint="Código Evento"
-            android:inputType="textPersonName" />
+            android:hint="Empresa"
+            android:inputType="textEmailAddress" >
+
+            <requestFocus />
+        </EditText>
+
     </LinearLayout>
 
     <LinearLayout
@@ -75,8 +90,7 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_gravity="center_vertical|center_horizontal"
-            android:background="@drawable/boton_ingresar"
-            android:onClick="login" />
+            android:background="@drawable/boton_ingresar"/>
     </LinearLayout>
 
     <LinearLayout

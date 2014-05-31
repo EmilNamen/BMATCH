@@ -7,30 +7,39 @@
     <uses-sdk
         android:minSdkVersion="11"
         android:targetSdkVersion="19" />
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-
-    <permission android:name="com.example.gcm.permission.C2D_MESSAGE"
-        android:protectionLevel="signature" />
-    <uses-permission android:name="com.example.gcm.permission.C2D_MESSAGE" />
     
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <!-- Network State Permissions to detect Internet status -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Permission to vibrate -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+
+    <!--
+  IMPORTANT: Change "com.parse.tutorials.pushnotifications.permission.C2D_MESSAGE" in the lines below
+  to match your app's package name + ".permission.C2D_MESSAGE".
+    -->
+    <permission
+        android:name="co.bmatch.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="co.bmatch.permission.C2D_MESSAGE" />
 
     <application
         android:allowBackup="true"
+        android:configChanges="orientation"
+        android:debuggable="true"
         android:icon="@drawable/bmatchicon"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" 
-        android:configChanges="orientation">
-        
+        android:theme="@style/AppTheme" >
         <activity
-            android:name="co.bmatch.LogInActivity"
+            android:name="co.bmatch.FirstActivity"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Black.NoTitleBar" >
             <intent-filter>
@@ -40,27 +49,44 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="co.bmatch.PeopleListActivity"
+            android:name="LogInActivity"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Black.NoTitleBar" >
         </activity>
-        
         <activity
-            android:name="co.bmatch.ChatActivity"
+            android:name="PeopleListActivity"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.Black.NoTitleBar" >
+        </activity>
+        <activity
+            android:name="ChatActivity"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.Black.NoTitleBar" >
+        </activity>
+        <activity
+            android:name="PushHandler"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Black.NoTitleBar" >
         </activity>
 
+        <service android:name="com.parse.PushService" />
+        <receiver android:name="com.parse.ParseBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
         <receiver
-            android:name=".GcmBroadcastReceiver"
+            android:name="com.parse.GcmBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <category android:name="com.example.gcm" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+
+                <!-- IMPORTANT: Change "com.parse.tutorials.pushnotifications" to match your app's package name. -->
+                <category android:name="co.bmatch" />
             </intent-filter>
         </receiver>
-
-        <service android:name=".GcmIntentService" />
     </application>
 
 </manifest>

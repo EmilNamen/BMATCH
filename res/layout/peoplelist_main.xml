@@ -28,21 +28,21 @@
 
             <requestFocus />
         </EditText>
-
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/listViewActivePeopleLayout"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content" >
 
         <ListView
             android:id="@+id/listViewActivePeople"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
             android:background="@drawable/fondo_chat" >
         </ListView>
     </LinearLayout>
-    
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="4dp"
@@ -51,13 +51,15 @@
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content" >
 
         <ListView
             android:id="@+id/listViewPeople"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:background="@drawable/fondo_chat" >
+            android:layout_height="wrap_content"
+            android:background="@drawable/fondo_chat"
+            android:fastScrollAlwaysVisible="true"
+            android:minHeight="100dp" >
         </ListView>
     </LinearLayout>
 
