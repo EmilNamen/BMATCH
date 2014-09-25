@@ -1,19 +1,20 @@
 package co.bmatch;
 
 
+import java.util.ArrayList;
 import java.util.List;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.parse.ParseException;
 import com.parse.ParseObject;
-import com.parse.ParsePush;
 import com.parse.ParseQuery;
+import com.parse.ParseUser;
+
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.ProgressDialog;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -29,217 +30,195 @@ import android.widget.TextView;
  */
 public class ChatActivity extends Activity{
 
-	/*
-	 * Id del Usuario Master
-	 */
-	private String chat_user_id;
+	//The id of the event which the chat belongs to
+	private String active_event;
 
-	/*
-	 * Id del Usuario seleccionado para chat
-	 */
-	private String user_id;
+	//The chat user id which the logged user is talking to
+	private String chatUserId;
 
-	/*
-	 * Nombre del Usuario seleccionado para chat
-	 */
-	private String user_name;
+	//The logged user id
+	private String loggedUserId;
 
-	/*
-	 * Profesion del Usuario seleccionado para chat
-	 */
-	private String user_job;
+	//The Chat parse manager object
+	private ChatParseManager chatParseManager;
 
+	//The Chat object
+	private Chat chat;
 
-	private String chat_id;
+	//The unique Chat id that represents the active chat
+	private String chatId;
 
 	private EditText chatField;
-	private Context activityContext;
+
 	private TextView chatTextName;
-	private TextView chatTextJob;
+	private TextView chatTextJobCompany;
+
 	private co.bmatch.ChatAdapter adapter;
+
 	private ListView lv;
 
-	private static ChatActivity instancia;
+	private Button buttonSend;
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.chat_main);
-		activityContext = getApplicationContext();
-		instancia = this;
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-		chatTextJob = (TextView) findViewById(R.id.chatTextJob);
 		chatTextName = (TextView) findViewById(R.id.chatTextName);
-
-		try{
-			setChatUserInfo();
-		}
-		catch(Exception e)
-		{
-			Log.d("Chat User Info", "Error: " + e.getMessage());
-			e.printStackTrace();
-		}
+		chatTextJobCompany = (TextView) findViewById(R.id.chatTextJob);
 		chatField = (EditText) findViewById(R.id.editTextChatfield);
-
-
-		adapter = new ChatAdapter(activityContext, R.layout.chat_main);
+		adapter = new ChatAdapter(getApplicationContext(), R.layout.chat_main);
 		lv = (ListView) findViewById(R.id.chatList);
+		lv.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+		buttonSend = (Button) findViewById(R.id.buttonSendChat);
 
-		newChatClass();
+		//Calls the data from intent
+		Bundle b = getIntent().getExtras();
 
-		Button buttonSend = (Button) findViewById(R.id.buttonSendChat);
-		buttonSend.setOnClickListener( new View.OnClickListener() {
+		this.active_event = b.getString("activeEventId");
+		this.chatUserId = b.getString("chatUserId");
+		if(this.chatUserId == null && this.active_event ==  null){
+
+			SharedPreferences prefs = getSharedPreferences("your_file_name", MODE_PRIVATE); 
+			this.chatUserId = prefs.getString("chatUserId", " ");
+			this.active_event = prefs.getString("activeEventId",	" ");
+			System.out.println("ME LLEGAN LOS DATOS: " +this.chatUserId +"/^"+ this.active_event );
+		}
+
+		this.loggedUserId = b.getString("loggedUserId");
+		
+		if(this.loggedUserId ==  null){
+			loggedUserId = ParseUser.getCurrentUser().getObjectId().toString();
+		}
+
+		//Creates a new Chat object
+
+		chat = new Chat(this.active_event, this.chatUserId);
+		chatId = chat.getChatId();
+		System.out.println("Encuentro el chat con id:"+chatId);
+
+
+		// Creates the chat parse manager
+
+		chatParseManager =  new ChatParseManager(active_event, chatId, chatUserId, loggedUserId);
+
+		//Set the chat display values
+		setChatUserInfo();
+
+		//TODO Pensar bien cuando debo descargar los mensajes del servidor
+		new DownloadChat( ).execute( );
+
+	}
+
+	protected void onResume( ){
+		super.onResume();
+
+		buttonSend.setOnClickListener( new View.OnClickListener( ) {
 
 			@Override
-			public void onClick(View v) {
-				if(v.getId() == R.id.buttonSendChat)
-				{
-					if(chatField.getText().toString().isEmpty() != true)
-					{
-						//send message
-						try{
-							ParseObject message = new ParseObject("MensajeChat");
-							message.put("Chat", ParseObject.createWithoutData("Chat", chat_id));
-							message.put("From", ParseObject.createWithoutData("ChatUser", chat_user_id));
-							message.put("To", ParseObject.createWithoutData("ChatUser", user_id));
-							message.put("Mensaje", chatField.getText().toString());
-							message.put("Download", false);
-							message.save();
+			public void onClick(View v) {				
 
-							if(chatField.getText().toString().isEmpty() != true)
-								adapter.add( new ChatField(false, chatField.getText().toString() ) );
-							sendPush(chatField.getText().toString());
-						}
-						catch(Exception e)
-						{
-							e.printStackTrace();
-						}
-						chatField.setText(" ");
-					}
-				}				
+				if(!chatField.getText( ).toString( ).isEmpty( ))
+				{
+					//String nowAsString = new SimpleDateFormat("h:mm").format(System.currentTimeMillis());
+					chatParseManager.sendMessage(chatField.getText( ).toString());
+					adapter.add( new ChatField(false, chatField.getText().toString() ) );	
+					//TODO Solo envio push cuando el otro usuario no este dentro del chat
+					chatParseManager.sendPush(chatField.getText().toString());
+					chatField.setText(" ");
+				}
+
 			}
 		});
-
 		lv.setAdapter(adapter);
-		downloadChat();
+
 	}
 
 
-	public void sendPush(String msj)
+	/**
+	 * Method that set the display name and displayjobcompany of the chat
+	 */
+	public void setChatUserInfo()
 	{
-		ParsePush push = new ParsePush();
-		String author = LogInActivity.darInstancia().getUserFirstName() +" "+ LogInActivity.darInstancia().getUserLastName();		
-		try {
-			JSONObject data = new JSONObject( );
-			data.put( "alert", msj );
-			data.put( "title", author );
+		chatTextName.clearComposingText();
+		chatTextJobCompany.clearComposingText();
 
-			push.setChannel(chat_user_id);
-			push.setData(data);
-			push.sendInBackground();
-		} catch (JSONException e) {
+		try {			
+			chatTextName.setText( chatParseManager.getDisplayName() );
+			chatTextJobCompany.setText( chatParseManager.getJobCompany() );
+
+		} catch (Exception e) {
+			Log.d("Post retrieval", "Error: " + e.getMessage());
 			e.printStackTrace();
+			chatTextName.setText( "ERROR" );
+			chatTextJobCompany.setText( "ERROR" );
 		}
 
 	}
 
 
 	/**
-	 * Metodo que agrega el nombre y la profesion a la ventana del chat
+	 * Clase que descarga los mensajes del usuario
 	 */
-	public void setChatUserInfo()
-	{
-		chatTextName.clearComposingText();
-		chatTextJob.clearComposingText();		
-		user_id = PeopleListActivity.darInstancia().getActiveId();
-		user_name = PeopleListActivity.darInstancia().getActiveName();
-		user_job = PeopleListActivity.darInstancia().getactiveJob();
-		chatTextName.setText( user_name );
-		chatTextJob.setText( user_job );
-		chat_user_id = PeopleListActivity.darInstancia().getUserActiveId();
 
-	}
+	private class DownloadChat extends AsyncTask<Void, Void, String> {
 
-	public void newChatClass( ){
+		ParseQuery<ParseObject> queryMessage = ParseQuery.getQuery("ChatMessage");
+		List<ParseObject> chatList = new ArrayList<ParseObject>();
+		ProgressDialog dialog = new ProgressDialog(ChatActivity.this);
 
-		ParseQuery<ParseObject> query = ParseQuery.getQuery("Chat");
+		@Override
+		protected String doInBackground(Void... params) {
 
-		if(user_id.compareTo(chat_user_id) <= 0  )
-		{
-			query.whereEqualTo("Usuario1", ParseObject.createWithoutData("ChatUser", user_id));
-			query.whereEqualTo("Usuario2", ParseObject.createWithoutData("ChatUser", chat_user_id));
-		}
-		else
-		{
-			query.whereEqualTo("Usuario2", ParseObject.createWithoutData("ChatUser", user_id));
-			query.whereEqualTo("Usuario1", ParseObject.createWithoutData("ChatUser", chat_user_id));
-		}
-		try {
-			List<ParseObject> postList = query.find();
-			if(postList.isEmpty())
-			{
-				newChat();
+			try {
+				queryMessage.whereEqualTo("chat", ParseObject.createWithoutData( "Chat", chatId ));
+				queryMessage.orderByAscending("createdAt");
+				chatList = queryMessage.find();
+
+			} catch (ParseException e) {
+				e.printStackTrace();
 			}
-			else
-			{
-				ParseObject obj = postList.get(0);
-				chat_id = obj.getObjectId();
-			}
-		} catch (ParseException e) {
-			e.printStackTrace();
+			return "Downloading chat...";
 		}
-	}
 
-	public void newChat( ){
-
-		ParseObject chat = new ParseObject("Chat");
-		if(user_id.compareTo(chat_user_id) <= 0  )
-		{
-			chat.put("Usuario1", ParseObject.createWithoutData( "ChatUser", user_id));
-			chat.put("Usuario2", ParseObject.createWithoutData( "ChatUser",  chat_user_id));
+		@Override
+		protected void onPreExecute() { 
+			dialog.setMessage("Descargando mensajes...");
+			dialog.show();
 		}
-		else
-		{
-			chat.put("Usuario2", ParseObject.createWithoutData( "ChatUser", user_id));
-			chat.put("Usuario1", ParseObject.createWithoutData( "ChatUser",  chat_user_id));
-		}
-		try {
-			chat.save();
-			chat_id = chat.getObjectId();
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-	}
 
-
-	public void downloadChat( ){
-
-		try {
-			ParseQuery<ParseObject> queryMessage = ParseQuery.getQuery("MensajeChat");
-			queryMessage.whereEqualTo("Chat", ParseObject.createWithoutData( "Chat", chat_id ));
-			queryMessage.orderByAscending("createdAt");
-			List<ParseObject> chatList = queryMessage.find();
-			for( ParseObject chat: chatList ){				
-				ParseObject po = chat.getParseObject("To");
+		@Override
+		protected void onPostExecute(String result) {			
+			for( ParseObject chatActual: chatList ){				
+				ParseObject po = chatActual.getParseObject("to");
 				String idChat = po.getObjectId();
-				System.out.println(idChat);
-				System.out.println(chat_user_id);
-				adapter.add( new ChatField( idChat.equals( chat_user_id.toString() ), chat.get("Mensaje").toString() ) );
+				//String nowAsString = ""+chatActual.getCreatedAt().getHours()+": "+chatActual.getCreatedAt().getMinutes();
+				adapter.add( new ChatField( idChat.equals( loggedUserId ), chatActual.get("message").toString()) );
 			}
-		} catch (ParseException e) {
-			e.printStackTrace();
+
+			if (dialog.isShowing()) {
+				dialog.dismiss();
+			}
+
 		}
+		@Override
+		protected void onProgressUpdate(Void... values) {
 
+		}
 	}
 
-	public static ChatActivity darInstancia()
-	{
-		return instancia;
-	}
-	
+
 	@Override
-	protected void onPause() {
-        super.onPause();
-    }
+	protected void onPause( ) {
+		super.onPause();
+	}
+
+
+	@Override
+	protected void onStop( ) {
+		super.onStop();
+
+	}
 
 }

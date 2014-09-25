@@ -1,21 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/form2"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal" 
-        android:background="@color/blueSky">
+        android:background="@color/blueSky"
+        android:orientation="horizontal" >
 
         <ImageView
             android:id="@+id/chatContactImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            android:src="@drawable/bmatchicon2" />
+            android:src="@drawable/people_icon_chat" />
 
         <TextView
             android:id="@+id/chatTextName"
@@ -23,7 +24,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@+id/chatContactImage"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/black" />
 
         <TextView
             android:id="@+id/chatTextJob"
@@ -32,16 +34,16 @@
             android:layout_below="@+id/chatTextName"
             android:layout_toRightOf="@+id/chatContactImage"
             android:textAppearance="?android:attr/textAppearanceSmall" />
-    </LinearLayout>
-
-   
+    </RelativeLayout>
 
     <ListView
         android:id="@+id/chatList"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0.43"
-        android:background="@drawable/fondo_chat" >
+        android:background="@drawable/fondo_chat"
+        android:divider="@color/softSky"
+        android:dividerHeight="4px" >
     </ListView>
 
     <LinearLayout

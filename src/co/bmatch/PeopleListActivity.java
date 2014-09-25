@@ -4,27 +4,32 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.json.JSONObject;
+
+import com.parse.FindCallback;
+import com.parse.GetCallback;
 import com.parse.ParseAnalytics;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.ParseUser;
 import com.parse.PushService;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Filterable;
 import android.widget.ListAdapter;
@@ -47,41 +52,30 @@ public class PeopleListActivity extends Activity{
 	 */
 	private String chat_user_id;
 
+	private String active_event;
+
 	public static final String TAG_NAME = "Name";
 	public static final String TAG_JOB = "Job";
 	public static final String TAG_ID = "Id";
 
-
-	public static final String TAG_NAME_ACTIVE = "Name";
-	public static final String TAG_JOB_ACTIVE = "Job";
-	public static final String TAG_ID_ACTIVE = "Id";
-
-
-
 	private String activeName;
 	private String activeJob;
 	private String activeId;
-
-
-	public String activeSelectedName;
-	public String activeSelectedJob;
 
 	private ListView listPeople = null;
 	private ArrayList<HashMap<String, String>> contactList;	
 	private ListAdapter adapter;
 
 
-	private ListView listActivePeople = null;
-	private ArrayList<HashMap<String, String>> activeContactList;	
-	private ListAdapter activeAdapter;
-	private HashMap<String,String> map2;
-
 	private List<ParseObject> postList;
 
 	private static PeopleListActivity instancia;
-	
-	
-	
+
+
+	private String userInfo;
+
+	private String loggedUserId;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
@@ -90,231 +84,201 @@ public class PeopleListActivity extends Activity{
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
 
-		// Get chat_user_id
-		Intent intent = getIntent();
-		chat_user_id = intent.getStringExtra(LogInActivity.CHAT_USER_ID);
+		//Getting the event_id for the two multiple ways
+		try {
+			active_event = FirstActivity.darInstancia().getEventCode();
+			if(active_event.isEmpty( ) || active_event == null){
+				try {
+					active_event = EventsHistoryActivity.darInstancia( ).getIdSelectedEventId();
+				} catch (Exception e) {
+					e.printStackTrace();
+					Intent intent1 = new Intent(getApplicationContext(), LogInActivity.class);
+					startActivity(intent1);
+				}
+			}
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			Intent intent1 = new Intent(getApplicationContext(), LogInActivity.class);
+			startActivity(intent1);
+		}
 
 
-		//Parse push notifications
-		ParseInstallation pi = ParseInstallation.getCurrentInstallation();
-		System.out.println(chat_user_id);
-		PushService.subscribe(getApplicationContext(), chat_user_id, PushHandler.class);		
-		ParseAnalytics.trackAppOpened(getIntent());
-		pi.saveEventually();
+		loggedUserId = ParseUser.getCurrentUser().getObjectId().toString();
+		//Parse push notifications		
+		try {
+			ParseInstallation pi = ParseInstallation.getCurrentInstallation();
+			PushService.subscribe(getApplicationContext(), loggedUserId, ChatActivity.class);
+			ParseAnalytics.trackAppOpened(getIntent());
+			pi.saveEventually();
+
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 
 		// Activo la busqueda en la lista
 
 		searchInList();	
+
+
+		// Refresh button
+
+		Button buttonRefresh = (Button) findViewById(R.id.buttonPeople);
+		buttonRefresh.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				CharSequence text = "Refreshing...";
+				int duration = Toast.LENGTH_SHORT;
+
+				Toast toast = Toast.makeText(getApplicationContext(), text, duration);
+				toast.show();
+
+				// Query users of event
+				new SearchPeopleEvent( ).execute( );
+			}
+		});
 
 		// Lista de contactos 
 		contactList = new ArrayList<HashMap<String,String>>();
 		listPeople = (ListView) findViewById(R.id.listViewPeople);
 		adapter = new SimpleAdapter(getApplicationContext(), contactList, R.layout.contact_main,
 				new String[] {TAG_NAME, TAG_JOB},  new int[] {R.id.textName, R.id.textJob});
-
-		// Lista de contactos activos
-		activeContactList = new ArrayList<HashMap<String,String>>();		
-		listActivePeople = (ListView) findViewById(R.id.listViewActivePeople);
-		setListVisible(false);
-		activeAdapter = new SimpleAdapter(getApplicationContext(), activeContactList, R.layout.contact_main,
-				new String[] {TAG_NAME_ACTIVE, TAG_JOB_ACTIVE},  new int[] {R.id.textName, R.id.textJob});
+		activeId = "";
 
 
 		// Query users of event
-		searchUsersOfEvent();
-
-		// Call chat		
-		callUserChat();
-	}
-
-	public void callUserChat()
-	{
-		// CONTACT`S LIST
-		try{
-			listPeople.setOnItemClickListener(new OnItemClickListener() {
-
-				@Override
-				public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-					try{
-						setListVisible(true);
-
-						//Mensaje TOAST
-						CharSequence text = "Please wait...";
-						int duration = Toast.LENGTH_SHORT;
-
-						Toast toast = Toast.makeText(getApplicationContext(), text, duration);
-						toast.show();
-
-						//AGREGO A LISTA ARRIBA						
-						activeName = contactList.get(position).get(TAG_NAME).toString();
-						activeJob = contactList.get(position).get(TAG_JOB).toString();
-						activeId = postList.get(position).getObjectId().toString();
-
-						if(activeAdapter.isEmpty( )==true)
-						{
-							map2 = new HashMap<String, String>();
-							map2.put(TAG_NAME_ACTIVE, activeName);
-							map2.put(TAG_JOB_ACTIVE, activeJob);
-							map2.put(TAG_ID_ACTIVE, activeId);
-							activeContactList.add(map2);
-						}
-						else
-						{
-							map2 = new HashMap<String, String>();
-							activeName = contactList.get(position).get(TAG_NAME).toString();
-							activeJob = contactList.get(position).get(TAG_JOB).toString();
-							activeId = postList.get(position).getObjectId().toString();
-							boolean encontro = false;
-							for (int i = 0; i < activeContactList.size(); i++) {
-								HashMap<String, String> a = activeContactList.get(i);
-								System.out.println("//////////----");
-								System.out.println(a.get(TAG_ID_ACTIVE));
-								System.out.println(activeId);
-								if(a.get(TAG_ID_ACTIVE).equals(activeId)==true)
-								{
-									Log.d("EMIL", "URDMEN");
-									i=activeContactList.size();
-									encontro = true;
-								}
-							}
-							if(encontro==false)
-							{
-								map2.put(TAG_NAME_ACTIVE, activeName);
-								map2.put(TAG_JOB_ACTIVE, activeJob);
-								map2.put(TAG_ID_ACTIVE, activeId);
-								activeContactList.add(map2);
-							}
-						}
-						((BaseAdapter) activeAdapter).notifyDataSetChanged();	
-						Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
-						startActivity(intent);
-						listActivePeople.setAdapter(activeAdapter);
-
-						//TODO Set a max heigh for the activeAdapter
-						if(listActivePeople.getCount()>=5)
-						{
-							Display display = getWindowManager().getDefaultDisplay(); 
-							int height = display.getHeight();  // deprecated
-							listPeople.setMinimumHeight(height/2);
-							listActivePeople.setFastScrollAlwaysVisible(true);								
-						}
-					}
-					catch (Exception e)
-					{
-						Log.d("TAG_CHAT", "Error: " + e.getMessage());
-						e.printStackTrace();
-					}
-				}
+		new SearchPeopleEvent( ).execute( );
 
 
-			});
-		}
-		catch(Exception e)
-		{
-			Log.d("TAG_NAME", "Error: " + e.getMessage());
-			e.printStackTrace();
-		}
-
-		// ACTIVE CONTACT`S LIST
-
-		listActivePeople.setOnItemClickListener(new OnItemClickListener() {
+		listPeople.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {	
 
+				userInfo = listPeople.getItemAtPosition(position).toString();
+
+				//CALL NEW CHAT
 				CharSequence text = "Please wait...";
 				int duration = Toast.LENGTH_SHORT;
 
 				Toast toast = Toast.makeText(getApplicationContext(), text, duration);
 				toast.show();
 
-				activeName = activeContactList.get(position).get(TAG_NAME_ACTIVE).toString();
-				activeJob = activeContactList.get(position).get(TAG_JOB_ACTIVE).toString();
-				activeId = activeContactList.get(position).get(TAG_ID_ACTIVE).toString();
+				String idString = listPeople.getItemAtPosition(position).toString();
+				String idChar[] = idString.split("Id=");
+				activeId = idChar[1].replace("}", "");
+				cambiarNombreTrabajo(activeId);
+
 				Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+				Bundle b = new Bundle();
+				b.putString("activeEventId", active_event);
+				b.putString("chatUserId", activeId);
+				b.putString("loggedUserId", loggedUserId);
+				intent.putExtras(b);
 				startActivity(intent);
-			}	
-
-		});
+				finish();
 
 
-		//Long click para eliminar chat activo
-
-		listActivePeople.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-
-			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-				String str=listActivePeople.getItemAtPosition(position).toString();
-				Log.d("ITEM: ", "long click : " +str);
-				dialog(position);
-				return true;
 			}
-
 		});
 	}
 
-	/**
-	 * Dialogo para eliminar un chat 
-	 * @param nPosition la posicion de la lista de usuarios activos
-	 */
-
-	@SuppressWarnings("deprecation")
-	private void dialog(final int nPosition) {
-		AlertDialog dialogAlert = new AlertDialog.Builder(PeopleListActivity.this).create();
-		dialogAlert.setMessage("Delete active chat ?");
-		dialogAlert.setButton("Delete",new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int whichButton){
-				PeopleListActivity.this.activeContactList.remove(nPosition);
-				((BaseAdapter) PeopleListActivity.this.activeAdapter).notifyDataSetChanged();
-
-			}
-		});
-		dialogAlert.setButton2("Cancel",new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int whichButton){
-				dialog.cancel();
-			}
-		});
-
-		dialogAlert.show();
-	}
-
-	/**
-	 * Metodo que busca los usuarios dado un evento
-	 */
-	public void searchUsersOfEvent()
+	private void cambiarNombreTrabajo(String id)
 	{
-		Intent intent = getIntent();
-		String event_message = intent.getStringExtra(LogInActivity.EVENT_MESSAGE);
-		// Create query for objects of type "Post"
-		ParseQuery<ParseObject> query = ParseQuery.getQuery("ChatUser");
-		query.orderByAscending("Nombre");
-		// Restrict to cases where the author is the current user.
-		// Note that you should pass in a ParseUser and not the		
-		// String representation of that user
-		query.whereEqualTo("Evento", ParseObject.createWithoutData("Evento", event_message));
+		ParseQuery<ParseObject> query = ParseQuery.getQuery("User");
+		query.whereEqualTo("objectId", id);
 		try {
-			postList = query.find();
-			contactList.clear();
+			List<ParseObject> postList = query.find();
 			for(ParseObject post: postList)
 			{
-				// creating new HashMap
-				HashMap<String, String> map = new HashMap<String, String>();
-				String firstName = post.getString("Nombre");	
-				// adding each child node to HashMap key => value
-				String lastName = post.getString("Apellido");
-				map.put(TAG_NAME, firstName + " " + lastName);
-				String job = post.getString("Profesion");
-				map.put(TAG_JOB, job);
-
-				// adding HashList to ArrayList
-				contactList.add(map);
+				String firstName = post.getString("name");	
+				String lastName = post.getString("lastName");
+				activeName = firstName+" "+lastName;
+				String job = post.getString("career");
+				activeJob = job;
 			}
-			((BaseAdapter) adapter).notifyDataSetChanged();
 
 		} catch (ParseException e) {
 			Log.d("Post retrieval", "Error: " + e.getMessage());
 		}
+	}
 
-		listPeople.setAdapter(adapter);
+
+
+	/**
+	 * Clase que busca los usuarios dado un evento
+	 */
+	private class SearchPeopleEvent extends AsyncTask<Void, Void, String> {	
+
+		// Create query for objects of type "Post"
+		ParseQuery<ParseObject> query = ParseQuery.getQuery("EventUser");
+
+		@Override
+		protected String doInBackground(Void... params) {
+			return "Searching people in event...";
+		}
+		@Override
+		protected void onPreExecute() {
+			// Restrict to cases where the author is the current user.
+			// Note that you should pass in a ParseUser and not the		
+			// String representation of that user
+			query.whereEqualTo("event", ParseObject.createWithoutData("Event", active_event));
+		}
+		@Override
+		protected void onPostExecute(String result) {
+			query.findInBackground(new FindCallback<ParseObject>() {
+				public void done(List<ParseObject> list, ParseException e) {
+					if (e == null) {
+						postList = list;
+						contactList.clear();
+						for(ParseObject post: postList)
+						{
+							post.getParseObject("user").fetchIfNeededInBackground(new GetCallback<ParseObject>() {
+								public void done(ParseObject object, ParseException e) {
+									// all fields of the object will now be available here.
+									// creating new HashMap
+									if (object!=null) {
+										HashMap<String, String> map = new HashMap<String, String>();
+										String firstName = object
+												.getString("name");
+										// adding each child node to HashMap key => value
+										String lastName = object
+												.getString("lastName");
+										map.put(TAG_NAME, firstName + " "
+												+ lastName);
+										String job = object.getString("career");
+										String company = object.getString("company");
+										map.put(TAG_JOB, job + "   "+ company);
+										String id = object.getObjectId()
+												.toString();
+										map.put(TAG_ID, id);
+										// adding HashList to ArrayList
+										if (!id.equals(loggedUserId))
+											contactList.add(map);
+										((BaseAdapter) adapter)
+										.notifyDataSetChanged();
+									}
+								}
+							});
+						}
+
+
+					} else {
+						Log.d("BMATCH", "Error: " + e.getMessage());
+					}
+				}
+			});
+			listPeople.setAdapter(adapter);
+
+		}
+
+		@Override
+		protected void onProgressUpdate(Void... values) {
+
+		}
 	}
 
 	/**
@@ -328,6 +292,7 @@ public class PeopleListActivity extends Activity{
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before,int count) {
 				((Filterable) adapter).getFilter().filter(s);
+
 			}
 
 			@Override
@@ -340,42 +305,48 @@ public class PeopleListActivity extends Activity{
 		});
 	}
 
+	public String getUserActiveId()	{
+		return chat_user_id;
+	}
 
-
-	public String getActiveName()
-	{
+	public String getActiveName() {
 		return activeName;
 	}
 
-	public String getactiveJob()
-	{
+	public String getActiveJob() {
 		return activeJob;
 	}
 
-	public String getActiveId()
-	{
+	public String getActiveId()	{
 		return activeId;
 	}
-	public String getUserActiveId()
-	{
-		return chat_user_id;
-	}
-	
-	/**
-	 * Metodo encargado de no mostrar la lista de usuarios activos hasta que exista alguno
-	 * @param isVisible Si exsite un usuario para agregar a la lista
-	 */
-	private void setListVisible ( boolean isVisible ) {
-		listActivePeople.setVisibility( isVisible ? View.VISIBLE : View.INVISIBLE );
-	}
 
+	public String getActiveUserInfo()
+	{
+		return userInfo;
+	}
 	public static PeopleListActivity darInstancia()
 	{
 		return instancia;
 	}
-	
+
+	public ArrayList<HashMap<String, String>> getActivePeople()
+	{
+		return contactList;
+	}
+
+
+
 	@Override
-	protected void onPause() {
-        super.onPause();
-    }
+	protected void onPause( ) {
+		super.onPause();
+	}
+
+
+	@Override
+	protected void onStop( ) {
+		super.onStop();
+
+	}
+
 }

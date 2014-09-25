@@ -1,0 +1,102 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:gravity="fill"
+    android:orientation="vertical"
+    tools:context=".SignUpActivity" >
+
+    <ImageView
+        android:id="@+id/imageHome"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="top"
+        android:scaleType="fitXY"
+        android:src="@drawable/bmatch_cabezote" />
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin">        
+        
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin" >
+
+        <EditText
+            android:id="@+id/EditTextfirstName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Nombre"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/EditTextlastName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Apellido"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/EditTextjob"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Profesión"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/EditTextCompany"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Empresa"
+            android:inputType="textPersonName" >
+
+            <requestFocus />
+        </EditText>
+        
+        <EditText
+            android:id="@+id/EditTextemail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Email login"
+            android:inputType="textEmailAddress" />
+        
+        <EditText
+            android:id="@+id/EditTextpassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Clave"
+            android:inputType="textPassword" />
+        
+        <EditText
+            android:id="@+id/EditTextconfirmPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Confirmar Clave"
+            android:inputType="textPassword" />
+        
+        <Button
+            android:id="@+id/buttonRegister"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:text="Registrarme"/>
+
+    </LinearLayout>
+
+</LinearLayout>

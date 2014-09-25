@@ -2,13 +2,17 @@ package co.bmatch;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.List;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -17,9 +21,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.parse.LogInCallback;
 import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
 /**
@@ -30,17 +33,11 @@ import com.parse.ParseUser;
 public class LogInActivity extends Activity{
 
 
-	private EditText firstName;
-	private EditText lastName;
-	private EditText email;
-	private EditText job;
-	private EditText company;
+	private EditText login;
+	private EditText password;
 
-	public final static String EVENT_MESSAGE = "co.bmatch.event_message";
-	public final static String CHAT_USER_ID = "co.bmatch.chat_user_id";
+
 	private String chat_user_id;
-
-	private ParseUser user;
 
 	private ProgressDialog dialog;
 
@@ -57,22 +54,19 @@ public class LogInActivity extends Activity{
 	 */
 	static final String TAG = "BMATCH";
 
-	
+
 	private static LogInActivity instancia;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.log_in_main);
 		instancia = this;
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-		firstName = (EditText) findViewById(R.id.EditTextfirstName);
-		lastName = (EditText) findViewById(R.id.EditTextlastName);
-		email = (EditText) findViewById(R.id.EditTextemail);
-		job = (EditText) findViewById(R.id.EditTextjob);
-		company = (EditText) findViewById(R.id.EditTextCompany);
-		if(firstName.getText().toString().isEmpty() && lastName.getText().toString().isEmpty() )
+		login = (EditText) findViewById(R.id.EditTextlogin);
+		password = (EditText) findViewById(R.id.EditTextPassword);
+		if(login.getText().toString().isEmpty() && password.getText().toString().isEmpty() )
 		{
 			try{
 				read();
@@ -82,7 +76,8 @@ public class LogInActivity extends Activity{
 				Log.d("Reading mydata", "error: "+e.getMessage());
 			}
 		}
-		Button login = (Button) findViewById(R.id.buttonLOGIN);
+
+		Button login = (Button) findViewById(R.id.buttonLogIn);
 		login.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -91,23 +86,48 @@ public class LogInActivity extends Activity{
 				int duration = Toast.LENGTH_SHORT;
 
 				Toast toast = Toast.makeText(getApplicationContext(), text, duration);
-				toast.show();
+				toast.show( );
 				checkUserData();
-				save();
-				buttonLogIn();
+				save( );
+				buttonLogIn( );
 			}
 		});
-	}
 
+		Button signUp = (Button) findViewById(R.id.buttonSignUp);
+		SpannableString content = new SpannableString("Registrarme en BMATCH");
+		content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
+		signUp.setText(content);
+		signUp.setTextColor(Color.DKGRAY);
+		signUp.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				userSignUp( );
+			}
+		});
+
+		Button forgetPassword = (Button) findViewById(R.id.buttonForgetPassword);
+		SpannableString contentForgetPassword = new SpannableString("Olvidé mi contraseña");
+		contentForgetPassword.setSpan(new UnderlineSpan(), 0, contentForgetPassword.length(), 0);
+		forgetPassword.setText(contentForgetPassword);
+		forgetPassword.setTextColor(Color.DKGRAY);
+		forgetPassword.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				userForgetPassword( );
+			}
+		});
+
+
+
+	}
 
 	@SuppressLint("WorldWriteableFiles")
 	@SuppressWarnings("deprecation")
 	public void save( ){
-		data = 	firstName.getText().toString()+"-"+
-				lastName.getText().toString()+"-"+
-				email.getText().toString()+"-"+
-				job.getText().toString()+"-"+
-				company.getText().toString();
+		data = 	login.getText().toString()+"-"+
+				password.getText().toString();
 		try {
 			FileOutputStream fOut = openFileOutput("mydata",MODE_WORLD_WRITEABLE);
 			fOut.write(data.getBytes());
@@ -128,67 +148,21 @@ public class LogInActivity extends Activity{
 				temp = temp + Character.toString((char)c);
 				datas = temp.split("-");
 			}
-			System.out.println(temp);
-			firstName.setText(datas[0]);
-			lastName.setText(datas[1]);
-			email.setText(datas[2]);
-			job.setText(datas[3]);
-			company.setText(datas[4]);
+			login.setText(datas[0]);
+			password.setText(datas[1]);
 
 		}catch(Exception e){
-
+			e.printStackTrace();
 		}
 	}
-	/**
-	 * Metodo que realiza la llamada a PeopleListActivity la cual desplega la lista de usuarios registrados
-	 * en el evento dado por el codigo.
-	 * Le pasa el codigo del evento
-	 * Le pasa el codigo del usuario actual
-	 */
 
-	public void listPeopleView() { 	
-
-		dialog = ProgressDialog.show(this, "BMATCH", "Validating Info...",true);
-		new Thread(new Runnable() {	
-			@Override
-			public void run()
-			{
-				Intent intentList = new Intent( getApplicationContext(), PeopleListActivity.class );
-				intentList.putExtra(EVENT_MESSAGE, getEventCode());
-				intentList.putExtra(CHAT_USER_ID, chat_user_id);
-				startActivity( intentList );
-				dialog.dismiss();
-			}
-		}).start();
-	}
-
-	private String getEventCode()
+	public String getUserLogin()
 	{
-		return FirstActivity.darInstancia().getEventCode();
+		return login.getText().toString();
 	}
-	public String getUserFirstName()
+	public String getUserPassword()
 	{
-		return firstName.getText().toString();
-	}
-	public String getUserLastName()
-	{
-		return lastName.getText().toString();
-	}
-	public String getUserJob()
-	{
-		return job.getText().toString();
-	}
-	public String getUserEmail()
-	{
-		return email.getText().toString();
-	}
-	public String getUserCompany()
-	{
-		return company.getText().toString();
-	}
-	private ParseUser getUser()
-	{
-		return user;
+		return password.getText().toString();
 	}
 
 	/**
@@ -196,37 +170,22 @@ public class LogInActivity extends Activity{
 	 * @return True si son validos, False de lo contrario
 	 */
 
-	private boolean checkUserData()
+	private boolean checkUserData( )
 	{
 
 		boolean ok = false;
 		//Reviso que sean entradas de texto validas
 
-		String firstNameString = firstName.getText().toString();
-		String lastNameString = lastName.getText().toString();
-		String emailString = email.getText().toString();
-		String jobString = job.getText().toString();
-		String companyString = company.getText().toString();
+		String loginString = login.getText().toString();
+		String passwordString = password.getText().toString();
 
-		if(firstNameString.isEmpty() == true || firstNameString.length()>30)
+		if(loginString.isEmpty() == true || loginString.contains("@") != true || loginString.contains(".") != true)
 		{
-			firstName.setError("Nombre no valido");
+			login.setError("Login no valido");
 		}
-		else if(lastNameString.isEmpty() == true || lastNameString.length()>30)
+		else if(passwordString.isEmpty() == true)
 		{
-			lastName.setError("Apellido no valido");
-		}
-		else if(emailString.isEmpty() == true || emailString.contains("@") != true || emailString.contains(".") != true)
-		{
-			email.setError("Email no valido");
-		}
-		else if(jobString.isEmpty() == true)
-		{
-			job.setError("Profesion no valida");
-		}
-		else if(companyString.isEmpty() == true)
-		{
-			company.setError("Empresa no valida");
+			password.setError("Clave no valida");
 		}	
 		else
 		{
@@ -239,13 +198,8 @@ public class LogInActivity extends Activity{
 	 * Metodo que realiza el registro con Parse.com
 	 */
 
-	public void buttonLogIn()
+	public void buttonLogIn(  )
 	{
-		CharSequence text = "Doing the log-in";
-		int duration = Toast.LENGTH_SHORT;
-
-		Toast toast = Toast.makeText(getApplicationContext(), text, duration);
-		toast.show();
 		// Se realiza el login a BMATCH
 
 		if(checkUserData() == false)
@@ -254,68 +208,127 @@ public class LogInActivity extends Activity{
 		}
 		else
 		{
-			//Realiza el registro
-			userLogIn();
-
-			// Reviso si existe el chatUser
-			ParseQuery<ParseObject> queryUser = ParseQuery.getQuery("ChatUser");
-			queryUser.whereEqualTo("User", getUser());
 			try {
-				List<ParseObject> usersChat = queryUser.find();
-				if(usersChat.isEmpty())
-				{
-					ParseObject chatUser = new ParseObject("ChatUser");
-					chatUser.put("Nombre", getUserFirstName());
-					chatUser.put("Apellido", getUserLastName());
-					chatUser.put("Profesion", getUserJob());
-					chatUser.put("Company", getUserCompany());
-					chatUser.put("User", user);
-					chatUser.put("Evento", ParseObject.createWithoutData("Evento", getEventCode()));
-
-					chatUser.save();
-					chat_user_id = chatUser.getObjectId().toString();
-				}
-				else
-				{
-					ParseObject pO = usersChat.get(0);
-					chat_user_id = pO.getObjectId().toString();
-					// Muestra la lista de los usuarios registrados
-					listPeopleView();
-				}
-
-			} catch (ParseException e1) {
-				e1.printStackTrace();
+				//Intenta hacer Login( )
+				userLogIn();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
+	}
+
+	public void openMainBar( ){
+		
+		dialog = ProgressDialog.show(this, "BMATCH", "Validating Info...",true);
+		dialog.setIcon(R.drawable.bmatchicon_alert);
+		new Thread(new Runnable() {	
+			@Override
+			public void run()
+			{
+				Intent intentList = new Intent( getApplicationContext(), MainBar.class );
+				startActivity( intentList );
+				dialog.dismiss();
+			}
+		}).start();
+	}
+
+
+	public String getMasterId( )
+	{
+		return chat_user_id;
 	}
 
 	/**
 	 * Metodo que realiza el log in es decir el registro si ya esta en la base de datos
 	 */	
-	private void userLogIn()
-	{
+	@SuppressWarnings("deprecation")
+	private void userLogIn( )
+	{ 
 		try {
-			user = ParseUser.logIn(getUserEmail(), getUserFirstName()+getUserLastName());
-		} catch (ParseException e) {
+			ParseUser.logInInBackground(getUserLogin(), getUserPassword(), new LogInCallback() {
+				public void done(ParseUser user, ParseException e) {
+					if (user != null) {
+						// Enter in BMATCH
+						openMainBar();
+					} else {
+						// Signup failed. Look at the ParseException to see what happened.
+						AlertDialog dialogAlert = new AlertDialog.Builder(LogInActivity.this).create();
+						dialogAlert.setMessage("Error en los datos ingresados");
+						dialogAlert.setButton("Aceptar",new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int whichButton){
+								dialog.cancel( );
+							}
+						});
+
+						dialogAlert.setButton2("Registrarme",new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int whichButton){
+								userSignUp( );
+							}
+						});
+						dialogAlert.show( );
+						e.printStackTrace();
+					}
+				}
+			});
+		} catch (Exception e) {
 			e.printStackTrace();
-			userSignUp();
 		}		
 	}
 
 	/**
 	 * Metodo que realiza el sign up es decir el registro no esta en la base de datos
 	 */
-	private void userSignUp()
+	private void userSignUp( )
 	{
-		user = new ParseUser();
-		user.setUsername(getUserEmail());
-		user.setPassword(getUserFirstName()+getUserLastName());
-		user.setEmail(getUserEmail());
-		try {
-			user.signUp();
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
+		Intent intentSignUp = new Intent( getApplicationContext(), SignUpActivity.class );
+		startActivity( intentSignUp );
+	}
+
+	/**
+	 * Metodo que manda email si el usuario olvido su contraseña
+	 */
+	private void userForgetPassword() {
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(LogInActivity.this);
+		builder.setTitle("RESETEAR CONTRASEÑA");
+		builder.setIcon(R.drawable.alert_icon);
+		builder.setMessage("Ingrese su usuario: ");
+
+		// Use an EditText view to get user input.
+		final EditText input = new EditText(this);
+		input.setId(0);
+		builder.setView(input);
+
+		builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int whichButton) {
+
+				if(!input.getText().toString().isEmpty()){
+					try {
+						CharSequence text = "Please wait...";
+						int duration = Toast.LENGTH_SHORT;
+
+						Toast toast = Toast.makeText(getApplicationContext(), text, duration);
+						toast.show();
+						ParseUser.requestPasswordReset(input.getText().toString());
+					} catch (ParseException e) {
+						e.printStackTrace();
+					}					
+				}
+			}
+		});
+
+		builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				return;
+			}
+		});
+
+		builder.create();
+		builder.show();
 	}
 
 	@Override
@@ -324,14 +337,24 @@ public class LogInActivity extends Activity{
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
-	
-	public static LogInActivity darInstancia()
+
+	public static LogInActivity darInstancia( )
 	{
 		return instancia;
 	}
-	
+
+
+
 	@Override
-	protected void onPause() {
-        super.onPause();
-    }
+	protected void onPause( ) {
+		super.onPause();
+	}
+
+
+	@Override
+	protected void onStop( ) {
+		super.onStop();
+
+	}
 }
+

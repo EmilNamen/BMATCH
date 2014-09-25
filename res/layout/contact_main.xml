@@ -2,23 +2,24 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
- 
+
     <ImageView
         android:id="@+id/contactImage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:src="@drawable/bmatchicon2" />
- 
+        android:src="@drawable/people_icon_chat" />
+
     <TextView
         android:id="@+id/textName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/contactImage"
-        android:textColor="@color/black"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
- 
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/black" />
+
+    
     <TextView
         android:id="@+id/textJob"
         android:layout_width="wrap_content"
@@ -26,5 +27,5 @@
         android:layout_below="@+id/textName"
         android:layout_toRightOf="@+id/contactImage"
         android:textAppearance="?android:attr/textAppearanceSmall" />
- 
+
 </RelativeLayout>

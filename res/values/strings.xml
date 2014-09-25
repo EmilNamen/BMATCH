@@ -11,7 +11,8 @@
 
     <color name="grey">#666</color>
     <color name="white">#ffffff</color>
-    <color name="blueSky">#00a0f0</color>
+    <color name="blueSky">#23A9E1</color>
+     <color name="softSky">#E6F6FC</color>
     <color name="black">#000</color>
 
     <string name="title_activity_display_list">BMATCH</string>
@@ -20,6 +21,18 @@
     
      <string name="delete">Borrar</string>
      <string name="cancel">Cancelar</string>
+     
+     
+     <string name="Chat">CHAT</string>
+     <string name="Invitados">INVITADOS</string>
+     
+     
+     <string name="Historial">HISTORIAL</string>
+     <string name="Datos">DATOS</string>
+     <string name="Ingresar">INGRESAR</string>
+     
+     
+     
 
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>

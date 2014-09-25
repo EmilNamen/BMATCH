@@ -1,51 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/grey" >
+    android:background="@color/softSky"
+    android:orientation="vertical"
+    tools:context=".FirstActivity" >
+    
+    <ImageView
+        android:id="@+id/upperImage"
+        android:layout_gravity="top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/cabezote_chat" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin" >
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:text="Escanear Código QR"
+        android:textColor="@color/grey"
+        android:textAppearance="?android:attr/textAppearanceMedium" >
+    </TextView>
+
+    <Button
+        android:id="@+id/buttonEscanear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/qr" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin" >
+    </LinearLayout>
 
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="46dp"
-        android:text="Scan code"
-        android:textAppearance="?android:attr/textAppearanceMedium">
-	</TextView>
-	
-      <Button
-        android:id="@+id/buttonEnter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/textView2"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bmatchicon" />
-    
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/editCodeText"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="14dp"
-        android:text="/ Enter code here"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-    
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:text="/ Insertar código"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/grey" />
+
     <EditText
         android:id="@+id/editCodeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="130dp"
-        android:background="@color/white"
-        android:ems="10"
-        android:gravity="top" >
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:ems="10" >
 
         <requestFocus />
     </EditText>
 
-</RelativeLayout>
+    <Button
+        android:id="@+id/buttonIngresarEvento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:text="Ingresar"/>
+
+</LinearLayout>
